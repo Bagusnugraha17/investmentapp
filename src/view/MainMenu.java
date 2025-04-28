@@ -7,38 +7,53 @@ import model.SBN;
 import model.User;
 import util.LoginUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class MainMenu {
     private Scanner sc = new Scanner(System.in);
-    private List<Saham> daftarSaham = new ArrayList<>();
-    private List<SBN> daftarSBN = new ArrayList<>();
+    private List<Saham> daftarSaham = new java.util.ArrayList<>();
+    private List<SBN> daftarSBN = new java.util.ArrayList<>();
 
     public void start() {
-        System.out.print("Username: ");
-        String u = sc.nextLine();
-        System.out.print("Password: ");
-        String p = sc.nextLine();
+        while (true) {
+            System.out.println("--- Selamat Datang ---");
+            System.out.println("1. Login");
+            System.out.println("0. Keluar");
+            System.out.print("> ");
+            String pilihan = sc.nextLine();
 
-        User user = LoginUtil.authenticate(u, p);
-        if (user == null) {
-            System.out.println("Login gagal.");
-            return;
-        }
-        if (user.getClass().getSimpleName().equals("Admin")) {
-            AdminController ac = new AdminController(daftarSaham, daftarSBN);
-            menuAdmin(ac);
-        } else {
-            CustomerController cc = new CustomerController(daftarSaham, daftarSBN);
-            menuCustomer(cc);
+            if (pilihan.equals("1")) {
+                System.out.print("Username: ");
+                String u = sc.nextLine();
+                System.out.print("Password: ");
+                String p = sc.nextLine();
+
+                User user = LoginUtil.authenticate(u, p);
+                if (user == null) {
+                    System.out.println("Login gagal.");
+                    continue;
+                }
+
+                if (user instanceof model.Admin) {
+                    AdminController ac = new AdminController(daftarSaham, daftarSBN);
+                    menuAdmin(ac);
+                } else {
+                    CustomerController cc = new CustomerController(daftarSaham, daftarSBN);
+                    menuCustomer(cc);
+                }
+            } else if (pilihan.equals("0")) {
+                System.out.println("Terima kasih. Sampai jumpa!");
+                System.exit(0);
+            } else {
+                System.out.println("Pilihan salah. Silakan pilih 1 atau 0.");
+            }
         }
     }
 
     private void menuAdmin(AdminController ac) {
         while (true) {
-            System.out.println("\n--- Admin Menu ---");
+            System.out.println("--- Admin Menu ---");
             System.out.println("1. Tambah Saham");
             System.out.println("2. Ubah Harga Saham");
             System.out.println("3. Tambah SBN");
@@ -47,32 +62,47 @@ public class MainMenu {
             String c = sc.nextLine();
             switch (c) {
                 case "1":
-                    System.out.print("Kode: "); String k = sc.nextLine();
-                    System.out.print("Nama: "); String n = sc.nextLine();
-                    System.out.print("Harga: "); double h = Double.parseDouble(sc.nextLine());
-                    ac.tambahSaham(new Saham(k,n,h));
+                    tambahSaham(ac);
                     break;
                 case "2":
-                    System.out.print("Kode: "); String kc = sc.nextLine();
-                    System.out.print("Harga baru: "); double hb = Double.parseDouble(sc.nextLine());
-                    ac.ubahHargaSaham(kc, hb);
+                    ubahHargaSaham(ac);
                     break;
                 case "3":
-                    System.out.print("Nama SBN: "); String ns = sc.nextLine();
-                    System.out.print("Bunga (%/th): "); double b = Double.parseDouble(sc.nextLine());
-                    System.out.print("Jangka (tahun): "); int j = Integer.parseInt(sc.nextLine());
-                    System.out.print("Tanggal Jatuh Tempo: "); String t = sc.nextLine();
-                    ac.tambahSBN(new SBN(ns, b, j, t));
+                    tambahSBN(ac);
                     break;
-                case "0": return;
-                default: System.out.println("Pilihan salah.");
+                case "0":
+                    return;
+                default:
+                    System.out.println("Pilihan salah.");
             }
         }
     }
 
+    private void tambahSaham(AdminController ac) {
+        String k = promptNonEmpty("Kode: ");
+        String n = promptNonEmpty("Nama: ");
+        double h = promptPositiveDouble("Harga: ");
+        ac.tambahSaham(new Saham(k, n, h));
+    }
+
+    private void ubahHargaSaham(AdminController ac) {
+        String kc = promptNonEmpty("Kode: ");
+        double hb = promptPositiveDouble("Harga baru: ");
+        ac.ubahHargaSaham(kc, hb);
+    }
+
+    private void tambahSBN(AdminController ac) {
+        String ns = promptNonEmpty("Nama SBN: ");
+        double b = promptPositiveDouble("Bunga (%/th): ");
+        int jw = promptPositiveInt("Jangka (tahun): ");
+        String jt = promptNonEmpty("Tanggal Jatuh Tempo: ");
+        double quota = promptPositiveDouble("Kuota Nasional: ");
+        ac.tambahSBN(new SBN(ns, b, jw, jt, quota));
+    }
+
     private void menuCustomer(CustomerController cc) {
         while (true) {
-            System.out.println("\n--- Customer Menu ---");
+            System.out.println("--- Customer Menu ---");
             System.out.println("1. Beli Saham");
             System.out.println("2. Jual Saham");
             System.out.println("3. Beli SBN");
@@ -83,31 +113,109 @@ public class MainMenu {
             String c = sc.nextLine();
             switch (c) {
                 case "1":
-                    System.out.print("Kode Saham: "); String ks = sc.nextLine();
-                    System.out.print("Jumlah: "); int jm = Integer.parseInt(sc.nextLine());
-                    cc.beliSaham(ks, jm);
+                    beliSaham(cc);
                     break;
                 case "2":
-                    System.out.print("Kode Saham: "); String ks2 = sc.nextLine();
-                    System.out.print("Jumlah: "); int jm2 = Integer.parseInt(sc.nextLine());
-                    cc.jualSaham(ks2, jm2);
+                    jualSaham(cc);
                     break;
                 case "3":
-                    System.out.print("Nama SBN: "); String ns = sc.nextLine();
-                    System.out.print("Nominal: "); double nom = Double.parseDouble(sc.nextLine());
-                    cc.beliSBN(ns, nom);
+                    beliSBN(cc);
                     break;
                 case "4":
-                    System.out.print("Nama SBN: "); String ns2 = sc.nextLine();
-                    System.out.print("Nominal: "); double nom2 = Double.parseDouble(sc.nextLine());
-                    cc.simulasiSBN(ns2, nom2);
+                    simulasiSBN(cc);
                     break;
                 case "5":
                     cc.lihatPortofolio();
                     break;
-                case "0": return;
-                default: System.out.println("Pilihan salah.");
+                case "0":
+                    return;
+                default:
+                    System.out.println("Pilihan salah.");
             }
         }
+    }
+
+    private void beliSaham(CustomerController cc) {
+        List<Saham> bisaBeli = cc.lihatSahamBisaDibeli();
+        System.out.println("-- Saham tersedia untuk dibeli --");
+        bisaBeli.forEach(s -> System.out.println(s.getKode() + " | " + s.getNamaPerusahaan() + " | " + s.getHarga()));
+        String ks = promptNonEmpty("Kode Saham: ");
+        int jm = promptPositiveInt("Jumlah: ");
+        cc.beliSaham(ks, jm);
+    }
+
+    private void jualSaham(CustomerController cc) {
+        List<Saham> bisaJual = cc.lihatSahamBisaDijual();
+        System.out.println("-- Saham tersedia untuk dijual --");
+        bisaJual.forEach(s -> System.out.println(s.getKode() + " | " + s.getNamaPerusahaan() + " | " + s.getHarga()));
+        String ks2 = promptNonEmpty("Kode Saham: ");
+        int jm2 = promptPositiveInt("Jumlah: ");
+        cc.jualSaham(ks2, jm2);
+    }
+
+    private void beliSBN(CustomerController cc) {
+        List<SBN> sbnBeli = cc.lihatSNBBisaDibeli();
+        System.out.println("-- SBN tersedia untuk dibeli --");
+        sbnBeli.forEach(sbn -> System.out.println(sbn.getNama() + " | Kuota: " + sbn.getKuotaNasional() + " | Bunga: " + sbn.getBunga()));
+        String ns3 = promptNonEmpty("Nama SBN: ");
+        double nom = promptPositiveDouble("Nominal: ");
+        cc.beliSBN(ns3, nom);
+    }
+
+    private void simulasiSBN(CustomerController cc) {
+        List<SBN> sbnJual = cc.lihatSNBDijual();
+        System.out.println("-- SBN tersedia untuk dijual --");
+        sbnJual.forEach(sbn -> System.out.println(sbn.getNama() + " | Nominal dimiliki: " + sbn.getKuotaNasional()));
+        String ns2 = promptNonEmpty("Nama SBN: ");
+        double nom2 = promptPositiveDouble("Nominal: ");
+        cc.simulasiSBN(ns2, nom2);
+    }
+
+    // Helper methods
+    private String promptNonEmpty(String prompt) {
+        String input;
+        while (true) {
+            System.out.print(prompt);
+            input = sc.nextLine();
+            if (!input.isEmpty()) {
+                break;
+            }
+            System.out.println("Input tidak boleh kosong.");
+        }
+        return input;
+    }
+
+    private int promptPositiveInt(String prompt) {
+        int input;
+        while (true) {
+            System.out.print(prompt);
+            try {
+                input = Integer.parseInt(sc.nextLine());
+                if (input > 0) {
+                    break;
+                }
+                System.out.println("Input harus lebih besar dari nol.");
+            } catch (NumberFormatException e) {
+                System.out.println("Input harus berupa angka.");
+            }
+        }
+        return input;
+    }
+
+    private double promptPositiveDouble(String prompt) {
+        double input;
+        while (true) {
+            System.out.print(prompt);
+            try {
+                input = Double.parseDouble(sc.nextLine());
+                if (input > 0) {
+                    break;
+                }
+                System.out.println("Input harus lebih besar dari nol.");
+            } catch (NumberFormatException e) {
+                System.out.println("Input harus berupa angka.");
+            }
+        }
+        return input;
     }
 }
