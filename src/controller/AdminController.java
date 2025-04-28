@@ -3,6 +3,7 @@ package controller;
 import model.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AdminController {
     private List<Saham> daftarSaham = new ArrayList<>();
@@ -28,5 +29,18 @@ public class AdminController {
 
     public void tambahSBN(SBN sbn) {
         daftarSBN.add(sbn);
+    }
+
+    public List<Saham> getSahamBisaDibeli(List<Saham> sahamDimiliki) {
+        return daftarSaham.stream()
+                .filter(s -> sahamDimiliki.stream()
+                        .noneMatch(owned -> owned.getKode().equalsIgnoreCase(s.getKode())))
+                .collect(Collectors.toList());
+    }
+
+    public List<SBN> getSBNBisaDibeli() {
+        return daftarSBN.stream()
+                .filter(sbn -> sbn.getKuotaNasional() > 0)
+                .collect(Collectors.toList());
     }
 }
