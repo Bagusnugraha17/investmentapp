@@ -2,10 +2,10 @@ package model;
 
 public class SBN {
     private String nama;
-    private double bunga;
-    private int jangkaWaktu;
+    private double bunga; // persen per tahun
+    private int jangkaWaktu; // tahun
     private String jatuhTempo;
-    private double kuotaNasional;
+    private double kuotaNasional; // Tambahan field
 
     public SBN(String nama, double bunga, int jangkaWaktu, String jatuhTempo, double kuotaNasional) {
         this.nama = nama;
@@ -33,9 +33,5 @@ public class SBN {
 
     public double getKuotaNasional() {
         return kuotaNasional;
-    }
-
-    public void setKuotaNasional(double kuotaNasional) {
-        this.kuotaNasional = kuotaNasional;
     }
 }
