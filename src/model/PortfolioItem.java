@@ -27,8 +27,17 @@ public class PortfolioItem {
 
     @Override
     public String toString() {
-        return saham.getKode() + " | " + saham.getNamaPerusahaan() +
-                " | lembar: " + jumlahLembar +
-                " | nilai: " + (jumlahLembar * saham.getHarga());
+        System.out.println("+--------------------------------------------------------------------------------------+");
+        System.out.println("| Kode       | Nama Perusahaan                |   Jumlah Lembar | Nilai (Rp)           |");
+        System.out.println("+--------------------------------------------------------------------------------------+");
+        double nilai = jumlahLembar * saham.getHarga();
+        return String.format(
+                "| %-10s | %-30s | %15d | Rp%,17.2f",
+                saham.getKode(),
+                saham.getNamaPerusahaan(),
+                jumlahLembar,
+                nilai
+        );
+
     }
 }
