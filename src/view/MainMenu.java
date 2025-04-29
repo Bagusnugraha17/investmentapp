@@ -18,14 +18,12 @@ public class MainMenu {
 
     public void start() {
         while (true) {
-            printLine();
-            System.out.println("|         SELAMAT DATANG          |");
-            printLine();
-            System.out.println("| 1. Login                        |");
-            System.out.println("| 0. Keluar                       |");
-            printLine();
-            String pilihan = promptMenuInput("Pilih menu: ", 0, 1);
+            drawHeader("SELAMAT DATANG");
+            System.out.println("1. Login");
+            System.out.println("0. Keluar");
+            drawFooter();
 
+            String pilihan = promptMenuInput("Pilih menu: ", 0, 1);
             if (pilihan.equals("1")) {
                 String u = promptNonEmpty("Username: ");
                 String p = promptNonEmpty("Password: ");
@@ -35,13 +33,14 @@ public class MainMenu {
                     System.out.println("Login gagal. Username atau password salah.");
                     continue;
                 }
-
                 if (user instanceof model.Admin) {
-                    AdminController ac = new AdminController(daftarSaham, daftarSBN);
-                    new AdminMenu(sc, daftarSaham, daftarSBN).tampil(ac);
+                    new AdminMenu(sc, daftarSaham, daftarSBN).tampil(
+                            new AdminController(daftarSaham, daftarSBN)
+                    );
                 } else {
-                    CustomerController cc = new CustomerController(daftarSaham, daftarSBN);
-                    new CustomerMenu(sc, daftarSaham, daftarSBN).tampil(cc);
+                    new CustomerMenu(sc, daftarSaham, daftarSBN).tampil(
+                            new CustomerController(daftarSaham, daftarSBN)
+                    );
                 }
             } else {
                 System.out.println("Terima kasih. Sampai jumpa!");
@@ -50,37 +49,47 @@ public class MainMenu {
         }
     }
 
+    private void drawHeader(String title) {
+        System.out.println("+--------------------------------------------+");
+        System.out.printf("| %-40s   |%n", title);
+        System.out.println("+--------------------------------------------+");
+    }
+
+    private void drawFooter() {
+        System.out.println("+--------------------------------------------+");
+    }
+
     private String promptNonEmpty(String prompt) {
         String input;
-        while (true) {
+        do {
             System.out.print(prompt);
             input = sc.nextLine().trim();
-            if (!input.isEmpty()) break;
-            System.out.println("Input tidak boleh kosong.");
-        }
+            if (input.isEmpty()) System.out.println("Input tidak boleh kosong.");
+        } while (input.isEmpty());
         return input;
     }
 
     private String promptMenuInput(String prompt, int min, int max) {
         String input;
-        while (true) {
+        int num;
+        do {
             System.out.print(prompt);
             input = sc.nextLine().trim();
-            if (input.matches("\\d+")) {
-                int number = Integer.parseInt(input);
-                if (number >= min && number <= max) break;
+            try {
+                num = Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Pilihan tidak valid. Masukkan angka antara " + min + " dan " + max + ".");
+                continue;
             }
-            System.out.println("Pilihan tidak valid. Masukkan angka antara " + min + " dan " + max + ".");
-        }
+            if (num < min || num > max) {
+                System.out.println("Pilihan tidak valid. Masukkan angka antara " + min + " dan " + max + ".");
+            } else break;
+        } while (true);
         return input;
-    }
-
-    private void printLine() {
-        System.out.println("+---------------------------------+");
     }
 }
 
-// ======================= ADMIN MENU ===========================
+// ---------------------- Admin Menu ----------------------
 class AdminMenu {
     private Scanner sc;
     private List<Saham> daftarSaham;
@@ -94,22 +103,18 @@ class AdminMenu {
 
     public void tampil(AdminController ac) {
         while (true) {
-            printLine();
-            System.out.println("|          ADMIN MENU             |");
-            printLine();
-            System.out.println("| 1. Tambah Saham                 |");
-            System.out.println("| 2. Ubah Harga Saham             |");
-            System.out.println("| 3. Tambah SBN                   |");
-            System.out.println("| 0. Logout                       |");
-            printLine();
-            String c = promptMenuInput("Pilih menu: ", 0, 3);
+            drawHeader("ADMIN MENU");
+            System.out.println("1. Tambah Saham");
+            System.out.println("2. Ubah Harga Saham");
+            System.out.println("3. Tambah SBN");
+            System.out.println("0. Kembali");
+            drawFooter();
 
-            switch (c) {
-                case "1" -> tambahSaham(ac);
-                case "2" -> ubahHargaSaham(ac);
-                case "3" -> tambahSBN(ac);
-                case "0" -> { return; }
-            }
+            String c = promptMenuInput("Pilih menu: ", 0, 3);
+            if (c.equals("1")) tambahSaham(ac);
+            else if (c.equals("2")) ubahHargaSaham(ac);
+            else if (c.equals("3")) tambahSBN(ac);
+            else break;
         }
     }
 
@@ -118,78 +123,97 @@ class AdminMenu {
         String n = promptNonEmpty("Nama Perusahaan: ");
         double h = promptPositiveDouble("Harga Saham: ");
         ac.tambahSaham(new Saham(k, n, h));
+        System.out.println(">> Saham " + k + " berhasil ditambahkan.");
+        tungguEnter();
     }
 
     private void ubahHargaSaham(AdminController ac) {
         String kc = promptNonEmpty("Kode Saham: ");
-        Saham saham = cariSaham(kc);
-        if (saham == null) {
-            System.out.println("Kode saham tidak ditemukan.");
-            return;
+        Saham s = daftarSaham.stream()
+                .filter(x -> x.getKode().equalsIgnoreCase(kc))
+                .findFirst().orElse(null);
+        if (s == null) {
+            System.out.println("Saham tidak ditemukan.");
+            tungguEnter(); return;
         }
         double hb = promptPositiveDouble("Harga baru: ");
         ac.ubahHargaSaham(kc, hb);
+        System.out.println(">> Harga saham " + kc + " diubah menjadi Rp" + hb);
+        tungguEnter();
     }
 
     private void tambahSBN(AdminController ac) {
         String ns = promptNonEmpty("Nama SBN: ");
-        double b = promptPositiveDouble("Bunga (%/th): ");
+        double b = promptPositiveDouble("Bunga (%): ");
         int jw = promptPositiveInt("Jangka waktu (tahun): ");
         String jt = promptNonEmpty("Tanggal Jatuh Tempo: ");
-        double quota = promptPositiveDouble("Kuota Nasional: ");
+        double quota = promptPositiveDouble("Kuota Nasional (Rp): ");
         ac.tambahSBN(new SBN(ns, b, jw, jt, quota));
+        System.out.println(">> SBN " + ns + " berhasil ditambahkan.");
+        tungguEnter();
     }
 
-    private Saham cariSaham(String kode) {
-        for (Saham s : daftarSaham) {
-            if (s.getKode().equalsIgnoreCase(kode)) return s;
-        }
-        return null;
+    private void drawHeader(String title) {
+        System.out.println("+--------------------------------------------+");
+        System.out.printf("| %-40s   |%n", title);
+        System.out.println("+--------------------------------------------+");
     }
 
-    // Helper input
+    private void drawFooter() {
+        System.out.println("+--------------------------------------------+");
+    }
+
+    private void tungguEnter() {
+        System.out.println("Tekan Enter untuk melanjutkan...");
+        sc.nextLine();
+    }
+
     private String promptNonEmpty(String prompt) {
-        System.out.print(prompt);
-        String input = sc.nextLine().trim();
-        return input.isEmpty() ? promptNonEmpty(prompt) : input;
+        String input;
+        do {
+            System.out.print(prompt);
+            input = sc.nextLine().trim();
+            if (input.isEmpty()) System.out.println("Input tidak boleh kosong.");
+        } while (input.isEmpty());
+        return input;
     }
 
     private int promptPositiveInt(String prompt) {
-        try {
-            System.out.print(prompt);
-            int val = Integer.parseInt(sc.nextLine());
-            return val > 0 ? val : promptPositiveInt(prompt);
-        } catch (Exception e) {
-            return promptPositiveInt(prompt);
+        int val;
+        while (true) {
+            try {
+                System.out.print(prompt);
+                val = Integer.parseInt(sc.nextLine());
+                if (val > 0) return val;
+            } catch (NumberFormatException ignored) {}
         }
     }
 
     private double promptPositiveDouble(String prompt) {
-        try {
-            System.out.print(prompt);
-            double val = Double.parseDouble(sc.nextLine());
-            return val > 0 ? val : promptPositiveDouble(prompt);
-        } catch (Exception e) {
-            return promptPositiveDouble(prompt);
+        double val;
+        while (true) {
+            try {
+                System.out.print(prompt);
+                val = Double.parseDouble(sc.nextLine());
+                if (val > 0) return val;
+            } catch (NumberFormatException ignored) {}
         }
     }
 
     private String promptMenuInput(String prompt, int min, int max) {
-        System.out.print(prompt);
-        try {
-            int val = Integer.parseInt(sc.nextLine());
-            return (val >= min && val <= max) ? String.valueOf(val) : promptMenuInput(prompt, min, max);
-        } catch (Exception e) {
-            return promptMenuInput(prompt, min, max);
+        String input;
+        int num;
+        while (true) {
+            System.out.print(prompt);
+            input = sc.nextLine().trim();
+            try { num = Integer.parseInt(input); }
+            catch (NumberFormatException e) { continue; }
+            if (num >= min && num <= max) return input;
         }
-    }
-
-    private void printLine() {
-        System.out.println("+---------------------------------+");
     }
 }
 
-// ======================= CUSTOMER MENU ===========================
+// ---------------------- Customer Menu ----------------------
 class CustomerMenu {
     private Scanner sc;
     private List<Saham> daftarSaham;
@@ -203,126 +227,180 @@ class CustomerMenu {
 
     public void tampil(CustomerController cc) {
         while (true) {
-            printLine();
-            System.out.println("|        CUSTOMER MENU            |");
-            printLine();
-            System.out.println("| 1. Beli Saham                   |");
-            System.out.println("| 2. Jual Saham                   |");
-            System.out.println("| 3. Beli SBN                     |");
-            System.out.println("| 4. Simulasi SBN                 |");
-            System.out.println("| 5. Lihat Portofolio             |");
-            System.out.println("| 0. Logout                       |");
-            printLine();
-            String c = promptMenuInput("Pilih menu: ", 0, 5);
+            drawHeader("CUSTOMER MENU");
+            System.out.println("1. Beli Saham");
+            System.out.println("2. Jual Saham");
+            System.out.println("3. Beli SBN");
+            System.out.println("4. Simulasi SBN");
+            System.out.println("5. Lihat Portofolio");
+            System.out.println("0. Kembali");
+            drawFooter();
 
+            String c = promptMenuInput("Pilih menu: ", 0, 5);
             switch (c) {
-                case "1" -> beliSaham(cc);
-                case "2" -> jualSaham(cc);
-                case "3" -> beliSBN(cc);
-                case "4" -> simulasiSBN(cc);
-                case "5" -> cc.lihatPortofolio();
-                case "0" -> { return; }
+                case "1": beliSaham(cc); break;
+                case "2": jualSaham(cc); break;
+                case "3": beliSBN(cc); break;
+                case "4": simulasiSBN(cc); break;
+                case "5":
+                    cc.lihatPortofolio();
+                    tungguEnter();
+                    break;
+                case "0": return;
             }
         }
     }
 
     private void beliSaham(CustomerController cc) {
         var bisaBeli = cc.lihatSahamBisaDibeli();
-        System.out.println("-- Saham tersedia untuk dibeli --");
-        bisaBeli.forEach(s -> System.out.println(s.getKode() + " | " + s.getNamaPerusahaan() + " | " + s.getHarga()));
+        System.out.println("+------------------------------------------------------------------+");
+        System.out.printf("| %-10s | %-30s | %-15s    |%n", "Kode", "Nama Perusahaan", "Harga (Rp)");
+        System.out.println("+------------------------------------------------------------------+");
+        bisaBeli.forEach(s ->
+                System.out.printf("| %-10s | %-30s | Rp%,15.2f |%n",
+                        s.getKode(), s.getNamaPerusahaan(), s.getHarga())
+        );
+        System.out.println("+------------------------------------------------------------------+");
+
         String ks = promptNonEmpty("Kode Saham: ");
         if (!sahamAda(ks)) {
-            System.out.println("Kode saham tidak ditemukan.");
-            return;
+            System.out.println("Saham tidak ditemukan.");
+            tungguEnter(); return;
         }
         int jm = promptPositiveInt("Jumlah: ");
         cc.beliSaham(ks, jm);
+        System.out.println(">> Berhasil beli " + jm + " lembar " + ks);
+        tungguEnter();
     }
 
     private void jualSaham(CustomerController cc) {
         var bisaJual = cc.lihatSahamBisaDijual();
-        System.out.println("-- Saham tersedia untuk dijual --");
-        bisaJual.forEach(s -> System.out.println(s.getKode() + " | " + s.getNamaPerusahaan() + " | " + s.getHarga()));
-        String ks2 = promptNonEmpty("Kode Saham: ");
-        if (!sahamAda(ks2)) {
-            System.out.println("Kode saham tidak ditemukan.");
-            return;
+        System.out.println("+-----------------------------------------------------------------+");
+        System.out.printf("| %-10s | %-30s | %-15s   |%n", "Kode", "Nama Perusahaan", "Harga (Rp)");
+        System.out.println("+-----------------------------------------------------------------+");
+        bisaJual.forEach(s ->
+                System.out.printf("| %-10s | %-30s | Rp%,15.2f |%n",
+                        s.getKode(), s.getNamaPerusahaan(), s.getHarga())
+        );
+        System.out.println("+-----------------------------------------------------------------+");
+
+        String ks = promptNonEmpty("Kode Saham: ");
+        if (!sahamAda(ks)) {
+            System.out.println("Saham tidak ditemukan.");
+            tungguEnter(); return;
         }
-        int jm2 = promptPositiveInt("Jumlah: ");
-        cc.jualSaham(ks2, jm2);
+        int jm = promptPositiveInt("Jumlah: ");
+        cc.jualSaham(ks, jm);
+        System.out.println(">> Berhasil jual " + jm + " lembar " + ks);
+        tungguEnter();
     }
 
     private void beliSBN(CustomerController cc) {
         var sbnBeli = cc.lihatSNBBisaDibeli();
-        System.out.println("-- SBN tersedia untuk dibeli --");
-        sbnBeli.forEach(sbn -> System.out.println(sbn.getNama() + " | Kuota: " + sbn.getKuotaNasional() + " | Bunga: " + sbn.getBunga()));
-        String ns3 = promptNonEmpty("Nama SBN: ");
-        if (!sbnAda(ns3)) {
-            System.out.println("Nama SBN tidak ditemukan.");
-            return;
+        System.out.println("+------------------------------------------------------+");
+        System.out.printf("| %-20s | %-15s | %-10s  |%n", "Nama SBN", "Kuota (Rp)", "Bunga (%%)");
+        System.out.println("+------------------------------------------------------+");
+        sbnBeli.forEach(sbn ->
+                System.out.printf("| %-20s | Rp%,13.2f | %10.2f%% |%n",
+                        sbn.getNama(), sbn.getKuotaNasional(), sbn.getBunga())
+        );
+        System.out.println("+------------------------------------------------------+");
+
+        String ns = promptNonEmpty("Nama SBN: ");
+        if (!sbnAda(ns)) {
+            System.out.println("SBN tidak ditemukan.");
+            tungguEnter(); return;
         }
-        double nom = promptPositiveDouble("Nominal: ");
-        cc.beliSBN(ns3, nom);
+        double nom = promptPositiveDouble("Nominal (Rp): ");
+        cc.beliSBN(ns, nom);
+        System.out.println(">> Berhasil beli SBN " + ns);
+        tungguEnter();
     }
 
     private void simulasiSBN(CustomerController cc) {
         var sbnJual = cc.lihatSNBDijual();
-        System.out.println("-- SBN tersedia untuk dijual --");
-        sbnJual.forEach(sbn -> System.out.println(sbn.getNama() + " | Nominal dimiliki: " + sbn.getKuotaNasional()));
-        String ns2 = promptNonEmpty("Nama SBN: ");
-        if (!sbnAda(ns2)) {
-            System.out.println("Nama SBN tidak ditemukan.");
-            return;
+        System.out.println("+---------------------------------------------+");
+        System.out.printf("| %-20s | %-20s |%n", "Nama SBN", "Dimiliki (Rp)");
+        System.out.println("+---------------------------------------------+");
+        sbnJual.forEach(sbn ->
+                System.out.printf("| %-20s | Rp%,18.2f |%n",
+                        sbn.getNama(), sbn.getKuotaNasional())
+        );
+        System.out.println("+---------------------------------------------+");
+
+        String ns = promptNonEmpty("Nama SBN: ");
+        if (!sbnAda(ns)) {
+            System.out.println("SBN tidak ditemukan.");
+            tungguEnter(); return;
         }
-        double nom2 = promptPositiveDouble("Nominal: ");
-        cc.simulasiSBN(ns2, nom2);
+        double nom2 = promptPositiveDouble("Nominal (Rp): ");
+        cc.simulasiSBN(ns, nom2);
+        tungguEnter();
     }
 
-    private boolean sahamAda(String kode) {
-        return daftarSaham.stream().anyMatch(s -> s.getKode().equalsIgnoreCase(kode));
+    private void drawHeader(String title) {
+        System.out.println("+------------------------------------------------------------+");
+        System.out.printf("| %-56s |%n", title);
+        System.out.println("+------------------------------------------------------------+");
     }
 
-    private boolean sbnAda(String nama) {
-        return daftarSBN.stream().anyMatch(s -> s.getNama().equalsIgnoreCase(nama));
+    private void drawFooter() {
+        System.out.println("+------------------------------------------------------------+");
+    }
+
+    private void tungguEnter() {
+        System.out.println("Tekan Enter untuk melanjutkan...");
+        sc.nextLine();
     }
 
     private String promptNonEmpty(String prompt) {
-        System.out.print(prompt);
-        String input = sc.nextLine().trim();
-        return input.isEmpty() ? promptNonEmpty(prompt) : input;
+        String input;
+        do {
+            System.out.print(prompt);
+            input = sc.nextLine().trim();
+        } while (input.isEmpty());
+        return input;
     }
 
     private int promptPositiveInt(String prompt) {
-        try {
-            System.out.print(prompt);
-            int val = Integer.parseInt(sc.nextLine());
-            return val > 0 ? val : promptPositiveInt(prompt);
-        } catch (Exception e) {
-            return promptPositiveInt(prompt);
+        while (true) {
+            try {
+                System.out.print(prompt);
+                int val = Integer.parseInt(sc.nextLine());
+                if (val > 0) return val;
+            } catch (NumberFormatException ignored) {}
         }
     }
 
     private double promptPositiveDouble(String prompt) {
-        try {
-            System.out.print(prompt);
-            double val = Double.parseDouble(sc.nextLine());
-            return val > 0 ? val : promptPositiveDouble(prompt);
-        } catch (Exception e) {
-            return promptPositiveDouble(prompt);
+        while (true) {
+            try {
+                System.out.print(prompt);
+                double val = Double.parseDouble(sc.nextLine());
+                if (val > 0) return val;
+            } catch (NumberFormatException ignored) {}
         }
     }
 
     private String promptMenuInput(String prompt, int min, int max) {
-        System.out.print(prompt);
-        try {
-            int val = Integer.parseInt(sc.nextLine());
-            return (val >= min && val <= max) ? String.valueOf(val) : promptMenuInput(prompt, min, max);
-        } catch (Exception e) {
-            return promptMenuInput(prompt, min, max);
+        String input;
+        int num;
+        while (true) {
+            System.out.print(prompt);
+            input = sc.nextLine().trim();
+            try { num = Integer.parseInt(input); }
+            catch (NumberFormatException e) { continue; }
+            if (num >= min && num <= max) return input;
         }
     }
 
-    private void printLine() {
-        System.out.println("+---------------------------------+");
+    private boolean sahamAda(String kode) {
+        return daftarSaham.stream()
+                .anyMatch(s -> s.getKode().equalsIgnoreCase(kode));
+    }
+
+    private boolean sbnAda(String nama) {
+        return daftarSBN.stream()
+                .anyMatch(s -> s.getNama().equalsIgnoreCase(nama));
     }
 }
