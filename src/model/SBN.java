@@ -5,7 +5,7 @@ public class SBN {
     private double bunga; // persen per tahun
     private int jangkaWaktu; // tahun
     private String jatuhTempo;
-    private double kuotaNasional; // Tambahan field
+    private double kuotaNasional; // Tambahan: kuota nasional dalam satuan unit
 
     public SBN(String nama, double bunga, int jangkaWaktu, String jatuhTempo, double kuotaNasional) {
         this.nama = nama;
@@ -33,5 +33,9 @@ public class SBN {
 
     public double getKuotaNasional() {
         return kuotaNasional;
+    }
+
+    public void setKuotaNasional(double kuotaNasional) {
+        this.kuotaNasional = kuotaNasional;
     }
 }
