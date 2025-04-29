@@ -6,6 +6,7 @@ Program Investasi Sederhana Berbasis Command Line ini merupakan aplikasi Java be
 - Nama  : I Ketut Bagus Nugraha (2405551139)
   
 # UML
+![UML](https://github.com/user-attachments/assets/117eabcf-068b-4269-9e16-961a5bfda388)
 
 # Cara Kerja  Program
 
