@@ -1,9 +1,9 @@
 package controller;
 
 import model.*;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CustomerController {
     private List<Saham> daftarSaham;
@@ -18,15 +18,16 @@ public class CustomerController {
 
     public void beliSaham(String kode, int jumlah) {
         for (Saham s : daftarSaham) {
-            if (s.getKode().equalsIgnoreCase(kode) && portSaham.stream().noneMatch(it -> it.getSaham().getKode().equalsIgnoreCase(kode))) {
+            if (s.getKode().equalsIgnoreCase(kode)) {
+                for (PortfolioItem it : portSaham) {
+                    if (it.getSaham().getKode().equalsIgnoreCase(kode)) {
+                        it.tambahLembar(jumlah);
+                        System.out.println(">> Ditambahkan " + jumlah + " lembar " + kode);
+                        return;
+                    }
+                }
                 portSaham.add(new PortfolioItem(s, jumlah));
                 System.out.println(">> Membeli " + jumlah + " lembar " + kode);
-                return;
-            }
-            if (s.getKode().equalsIgnoreCase(kode)) {
-                portSaham.stream().filter(it -> it.getSaham().getKode().equalsIgnoreCase(kode))
-                        .findFirst().ifPresent(it -> it.tambahLembar(jumlah));
-                System.out.println(">> Ditambahkan " + jumlah + " lembar " + kode);
                 return;
             }
         }
@@ -50,14 +51,9 @@ public class CustomerController {
 
     public void beliSBN(String nama, double nominal) {
         for (SBN sbn : daftarSBN) {
-            if (sbn.getNama().equalsIgnoreCase(nama) && sbn.getKuotaNasional() >= nominal) {
-                sbn.setKuotaNasional(sbn.getKuotaNasional() - nominal);
+            if (sbn.getNama().equalsIgnoreCase(nama)) {
                 portSBN.add(new SBNPortfolioItem(sbn, nominal));
                 System.out.println(">> Membeli SBN " + nama + " nominal " + nominal);
-                return;
-            }
-            if (sbn.getNama().equalsIgnoreCase(nama)) {
-                System.out.println(">> Gagal membeli: Kuota nasional tersisa hanya " + sbn.getKuotaNasional());
                 return;
             }
         }
@@ -83,30 +79,30 @@ public class CustomerController {
         if (portSBN.isEmpty()) System.out.println("— Kosong —");
         else portSBN.forEach(i -> System.out.println(i));
     }
-    
+
+    // ===== Tambahan method untuk MainMenu =====
+
     public List<Saham> lihatSahamBisaDibeli() {
-        return daftarSaham.stream()
-                .filter(s -> portSaham.stream()
-                        .noneMatch(item -> item.getSaham().getKode().equalsIgnoreCase(s.getKode())))
-                .collect(Collectors.toList());
+        return daftarSaham;
     }
-    
+
     public List<Saham> lihatSahamBisaDijual() {
-        return portSaham.stream()
-                .map(PortfolioItem::getSaham)
-                .collect(Collectors.toList());
+        List<Saham> sahamBisaJual = new ArrayList<>();
+        for (PortfolioItem it : portSaham) {
+            sahamBisaJual.add(it.getSaham());
+        }
+        return sahamBisaJual;
     }
-    
+
     public List<SBN> lihatSNBBisaDibeli() {
-        return daftarSBN.stream()
-                .filter(sbn -> sbn.getKuotaNasional() > 0)
-                .collect(Collectors.toList());
+        return daftarSBN;
     }
-    
+
     public List<SBN> lihatSNBDijual() {
-        return portSBN.stream()
-                .map(SBNPortfolioItem::getSbn)
-                .collect(Collectors.toList());
+        List<SBN> sbnDimiliki = new ArrayList<>();
+        for (SBNPortfolioItem it : portSBN) {
+            sbnDimiliki.add(it.getSbn());
+        }
+        return sbnDimiliki;
     }
 }
-
